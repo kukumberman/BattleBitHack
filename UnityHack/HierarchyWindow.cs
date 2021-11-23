@@ -2,28 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityHack;
 
 public class HierarchyWindow : MonoBehaviour
 {
 	private List<Transform> sceneTopObjects = new List<Transform>();
-
 	private List<Transform> currentChain = new List<Transform>();
-
 	private List<Transform> display = new List<Transform>();
-
 	private List<Component> components = new List<Component>();
 
-	private Vector2 scrollDisplay = Vector2.zero;
-
-	private Vector2 scrollComponents = Vector2.zero;
-
 	private Rect mainWindowRect = new Rect(0, 0, 0, 0);
-
 	private Vector2 mainWindowSize = new Vector2(1000, 750);
-
 	private Vector2 mainWindowMinimizedSize = new Vector2(250, 100);
 
 	private bool isWindowOpen = true;
+
+	private Pagination hierarchyPagination = new Pagination(10);
 
 	private void Start()
 	{
@@ -41,19 +35,9 @@ public class HierarchyWindow : MonoBehaviour
 			sceneTopObjects.Add(go.transform);
 		}
 
-		// bullshit at runtime
-
-		//var arr = FindObjectsOfType(typeof(GameObject)) as GameObject[];
-
-		//foreach (var go in arr)
-		//{
-		//	if (go.transform.parent == null)
-		//	{
-		//		sceneTopObjects.Add(go.transform);
-		//	}
-		//}
-
 		display.AddRange(sceneTopObjects);
+
+		hierarchyPagination.UpdateLength(display.Count);
 	}
 
 	private void OnGUI()
@@ -95,9 +79,13 @@ public class HierarchyWindow : MonoBehaviour
 
 			DrawBreadcrumb();
 
+			GUILayout.BeginHorizontal();
+
 			DrawDisplay();
 
 			DrawComponentsList();
+
+			GUILayout.EndHorizontal();
 		}
 
 		GUI.DragWindow();
@@ -129,22 +117,40 @@ public class HierarchyWindow : MonoBehaviour
 
 	private void DrawDisplay()
 	{
+		GUILayout.BeginVertical(GUILayout.Width(500));
+
 		GUILayout.Box("Hierarchy");
 
-		//scrollDisplay = GUILayout.BeginScrollView(scrollDisplay, false, true, GUILayout.Height(250));
-		//scrollDisplay = GUILayout.BeginScrollView(scrollDisplay);
-		//GUILayout.BeginVertical();
+		var selected = hierarchyPagination.Paginate(display, out int start);
 
-		for (int i = 0; i < display.Count; i++)
+		for (int i = 0; i < selected.Count; i++)
 		{
-			DrawDisplayEntry(i);
+			if (DrawDisplayEntry(start + i))
+			{
+				break;
+			}
 		}
 
-		//GUILayout.EndVertical();
-		//GUILayout.EndScrollView();
+		GUILayout.BeginHorizontal();
+
+		if (GUILayout.Button("<"))
+		{
+			hierarchyPagination.Back();
+		}
+
+		GUILayout.Label($"{hierarchyPagination.CurrentIndex + 1}/{hierarchyPagination.TotalPages()}");
+
+		if (GUILayout.Button(">"))
+		{
+			hierarchyPagination.Next();
+		}
+
+		GUILayout.EndHorizontal();
+
+		GUILayout.EndVertical();
 	}
 
-	private void DrawDisplayEntry(int index)
+	private bool DrawDisplayEntry(int index)
 	{
 		Transform entry = display[index];
 
@@ -155,6 +161,10 @@ public class HierarchyWindow : MonoBehaviour
 			if (GUILayout.Button("▶", GUILayout.ExpandWidth(false)))
 			{
 				HandleDisplayClick(index);
+
+				hierarchyPagination.MoveToStart();
+
+				return true;
 			}
 		}
 		else
@@ -162,7 +172,8 @@ public class HierarchyWindow : MonoBehaviour
 			GUILayout.Space(30);
 		}
 
-		GUILayout.Label(entry.name);
+		//GUILayout.Label(entry.name);
+		GUILayout.Label($"[{index}] {entry.name}");
 
 		if (GUILayout.Button("A", GUILayout.ExpandWidth(false)))
 		{
@@ -175,13 +186,15 @@ public class HierarchyWindow : MonoBehaviour
 		}
 
 		GUILayout.EndHorizontal();
+
+		return false;
 	}
 
 	private void DrawComponentsList()
 	{
-		GUILayout.Box("Components");
+		GUILayout.BeginVertical(GUILayout.Width(500));
 
-		//scrollComponents = GUILayout.BeginScrollView(scrollComponents, false, true);
+		GUILayout.Box("Components");
 
 		foreach (Component c in components)
 		{
@@ -190,7 +203,7 @@ public class HierarchyWindow : MonoBehaviour
 			GUILayout.Label(c.GetType().Name);
 		}
 
-		//GUILayout.EndScrollView();
+		GUILayout.EndVertical();
 	}
 
 	private void HandleBreadcrumbClick(int index)
@@ -218,6 +231,8 @@ public class HierarchyWindow : MonoBehaviour
 
 			AddChildrensToDisplay(clickedAt);
 		}
+
+		hierarchyPagination.MoveToStart();
 	}
 
 	private void HandleDisplayClick(int index)
@@ -246,6 +261,8 @@ public class HierarchyWindow : MonoBehaviour
 
 			display.Add(child);
 		}
+
+		hierarchyPagination.UpdateLength(display.Count);
 	}
 
 	private void FetchComponents(int index)
