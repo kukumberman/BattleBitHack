@@ -17,9 +17,9 @@ public class HierarchyWindow : MonoBehaviour
 
 	private Vector2 scrollComponents = Vector2.zero;
 
-	private Rect mainWindowRect = new Rect(0, 0, 750, 500);
+	private Rect mainWindowRect = new Rect(0, 0, 0, 0);
 
-	private Vector2 mainWindowSize = new Vector2(750, 500);
+	private Vector2 mainWindowSize = new Vector2(1000, 750);
 
 	private Vector2 mainWindowMinimizedSize = new Vector2(250, 100);
 

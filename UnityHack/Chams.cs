@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,7 +17,11 @@ namespace UnityHack
 
 		private Shader shader = null;
 
-		private void Start()
+		private List<TestRangeTarget> m_Targets = new List<TestRangeTarget>();
+
+		private Camera m_Camera = null;
+
+		private IEnumerator Start()
 		{
 			//shader = Shader.Find("Hidden/Internal-Colored");
 			//shader = Shader.Find("Unlit/Color");
@@ -30,6 +35,16 @@ namespace UnityHack
 			//moddedMaterial = new Material(shader);
 
 			Debug.Log($"shader is supported - {shader.isSupported}");
+
+			while (true)
+			{
+				m_Camera = Camera.main;
+				//m_Camera = MainCamera.Instance.CameraComponent;
+				m_Targets.Clear();
+				m_Targets.AddRange(FindObjectsOfType(typeof(TestRangeTarget)) as TestRangeTarget[]);
+
+				yield return new WaitForSeconds(2);
+			}
 		}
 
 		private void Update()
@@ -42,13 +57,41 @@ namespace UnityHack
 			}
 		}
 
+		private void OnGUI()
+		{
+			DrawTargets();
+		}
+
+		public void DrawTargets()
+		{
+			if (m_Targets.Count == 0) return;
+
+			for (int i = 0; i < m_Targets.Count; i++)
+			{
+				var target = m_Targets[i];
+
+				if (!target) continue;
+
+				Vector3 pos = m_Camera.WorldToScreenPoint(target.transform.position);
+				if (pos.z < 0) continue;
+				pos.y = Screen.height - pos.y;
+
+				GUI.color = Color.red;
+				//Drawing.DrawBox(pos, Vector2.one * 100, 1);
+
+				float distance = Vector3.Distance(target.transform.position, m_Camera.transform.position);
+				string text = $"{target.name}\n{distance}";
+				Drawing.DrawString(pos, text);
+			}
+		}
+
 		public void ReplaceTargets()
 		{
-			var targets = FindObjectsOfType(typeof(TestRangeTarget)) as TestRangeTarget[];
+			//var targets = FindObjectsOfType(typeof(TestRangeTarget)) as TestRangeTarget[];
 
 			Material material = isNormal ? defaultMaterial : moddedMaterial;
 
-			foreach (var target in targets)
+			foreach (var target in m_Targets)
 			{
 				var renderer = target.GetComponentInChildren<MeshRenderer>();
 				if (!defaultMaterial)
