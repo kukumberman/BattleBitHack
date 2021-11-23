@@ -21,20 +21,18 @@ namespace UnityHack
 
 		private Camera m_Camera = null;
 
+		//private Material mat = null;
+
 		private IEnumerator Start()
 		{
-			//shader = Shader.Find("Hidden/Internal-Colored");
-			//shader = Shader.Find("Unlit/Color");
-			shader = Shader.Find("Hidden/Internal-GUITexture");
-			
-			moddedMaterial = GetMat(Color.green);
+			//shader = Shader.Find("Unlit/Color"); // null
+			//shader = Shader.Find("Hidden/Internal-GUITexture"); // weird
+			//Debug.Log($"shader is supported - {shader.isSupported}");
 
-			//string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/shaders";
-			//AssetBundle bundle = AssetBundle.LoadFromFile(path);
-			//shader = bundle.LoadAsset<Shader>("ThermalEnemy");
-			//moddedMaterial = new Material(shader);
+			//moddedMaterial = GetMat(Color.green);
+			//moddedMaterial = null; // simply making null to achieve magenta color
 
-			Debug.Log($"shader is supported - {shader.isSupported}");
+			moddedMaterial = GetInternalColored(Color.green);
 
 			while (true)
 			{
@@ -46,6 +44,41 @@ namespace UnityHack
 				yield return new WaitForSeconds(2);
 			}
 		}
+
+		//public void OnPostRender()
+		//{
+		//	if (!mat)
+		//	{
+		//		// Unity has a built-in shader that is useful for drawing
+		//		// simple colored things. In this case, we just want to use
+		//		// a blend mode that inverts destination colors.
+		//		var shader = Shader.Find("Hidden/Internal-Colored");
+		//		mat = new Material(shader);
+		//		mat.hideFlags = HideFlags.HideAndDontSave;
+		//		// Set blend mode to invert destination colors.
+		//		mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusDstColor);
+		//		mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+		//		// Turn off backface culling, depth writes, depth test.
+		//		mat.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+		//		mat.SetInt("_ZWrite", 0);
+		//		mat.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+		//	}
+
+		//	GL.PushMatrix();
+		//	GL.LoadOrtho();
+
+		//	// activate the first shader pass (in this case we know it is the only pass)
+		//	mat.SetPass(0);
+		//	// draw a quad over whole screen
+		//	GL.Begin(GL.QUADS);
+		//	GL.Vertex3(0, 0, 0);
+		//	GL.Vertex3(1, 0, 0);
+		//	GL.Vertex3(1, 1, 0);
+		//	GL.Vertex3(0, 1, 0);
+		//	GL.End();
+
+		//	GL.PopMatrix();
+		//}
 
 		private void Update()
 		{
@@ -77,11 +110,12 @@ namespace UnityHack
 				pos.y = Screen.height - pos.y;
 
 				GUI.color = Color.red;
-				//Drawing.DrawBox(pos, Vector2.one * 100, 1);
 
 				float distance = Vector3.Distance(target.transform.position, m_Camera.transform.position);
 				string text = $"{target.name}\n{distance}";
 				Drawing.DrawString(pos, text);
+
+				//Drawing.DrawBox(pos, Vector2.one * 100, 1);
 			}
 		}
 
@@ -114,6 +148,34 @@ namespace UnityHack
 			//mat.SetInt("_ZTest", 0);
 			mat.SetColor("_Color", color);
 			return mat;
+		}
+
+		private Material GetInternalColored(Color color)
+		{
+			// doesnot displaying by default
+			Shader shader = Shader.Find("Hidden/Internal-Colored");
+			Material mat = new Material(shader);
+			mat.hideFlags = HideFlags.HideAndDontSave;
+			// Set blend mode to invert destination colors.
+			mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusDstColor);
+			mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+			// Turn off backface culling, depth writes, depth test.
+			mat.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+			mat.SetInt("_ZWrite", 0);
+			mat.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+			mat.SetColor("_Color", color);
+			return mat;
+		}
+
+		private Shader LoadFromBundle(string name)
+		{
+			// ThermalFriend
+			// ThermalEnemy
+			// shaders from bundle is not supported
+			string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/shaders";
+			AssetBundle bundle = AssetBundle.LoadFromFile(path);
+			Shader shader = bundle.LoadAsset<Shader>(name);
+			return shader;
 		}
 	}
 }

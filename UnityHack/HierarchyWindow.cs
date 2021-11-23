@@ -15,7 +15,7 @@ public class HierarchyWindow : MonoBehaviour
 	private Vector2 mainWindowSize = new Vector2(1000, 750);
 	private Vector2 mainWindowMinimizedSize = new Vector2(250, 100);
 
-	private bool isWindowOpen = true;
+	private bool isWindowOpen = false;
 
 	private Pagination hierarchyPagination = new Pagination(10);
 
@@ -131,6 +131,13 @@ public class HierarchyWindow : MonoBehaviour
 			}
 		}
 
+		DrawHierarchyPagination();
+
+		GUILayout.EndVertical();
+	}
+
+	private void DrawHierarchyPagination()
+	{
 		GUILayout.BeginHorizontal();
 
 		if (GUILayout.Button("<"))
@@ -146,8 +153,6 @@ public class HierarchyWindow : MonoBehaviour
 		}
 
 		GUILayout.EndHorizontal();
-
-		GUILayout.EndVertical();
 	}
 
 	private bool DrawDisplayEntry(int index)
@@ -172,12 +177,18 @@ public class HierarchyWindow : MonoBehaviour
 			GUILayout.Space(30);
 		}
 
-		//GUILayout.Label(entry.name);
-		GUILayout.Label($"[{index}] {entry.name}");
+		GUILayout.Label($"{index}", GUILayout.ExpandWidth(false));
+		GUILayout.Label(entry.name);
 
-		if (GUILayout.Button("A", GUILayout.ExpandWidth(false)))
+		string n = entry.gameObject.activeSelf ? "Y" : "N";
+		if (GUILayout.Button(n, GUILayout.ExpandWidth(false)))
 		{
 			entry.gameObject.SetActive(!entry.gameObject.activeSelf);
+		}
+
+		if (GUILayout.Button("C", GUILayout.ExpandWidth(false)))
+		{
+			// todo: log component tree
 		}
 
 		if (GUILayout.Button("#", GUILayout.ExpandWidth(false)))
