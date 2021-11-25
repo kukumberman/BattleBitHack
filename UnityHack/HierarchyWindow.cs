@@ -3,6 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityHack;
+using System;
+using System.IO;
+using SimpleJSON;
+
+[Serializable]
+public class SerializedEntry
+{
+	public string Name = "";
+	public List<string> Components = new List<string>();
+	public List<SerializedEntry> Childrens = new List<SerializedEntry>();
+	public int Bullshit = 0;
+}
 
 public class HierarchyWindow : MonoBehaviour
 {
@@ -186,9 +198,9 @@ public class HierarchyWindow : MonoBehaviour
 			entry.gameObject.SetActive(!entry.gameObject.activeSelf);
 		}
 
-		if (GUILayout.Button("C", GUILayout.ExpandWidth(false)))
+		if (GUILayout.Button("JSON", GUILayout.ExpandWidth(false)))
 		{
-			// todo: log component tree
+			Stringify(entry);
 		}
 
 		if (GUILayout.Button("#", GUILayout.ExpandWidth(false)))
@@ -283,5 +295,66 @@ public class HierarchyWindow : MonoBehaviour
 		components.Clear();
 
 		components.AddRange(entry.GetComponents<Component>());
+	}
+
+	private void Stringify(Transform obj)
+	{
+		// JsonUtility doesn't serializes "Childrens property" + no .dll by default in game folder
+		//string json = JsonUtility.ToJson(Foo(obj);, true);
+		string json = JSONEncoder.Encode(Bullshit(obj));
+
+		string folder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+		string path = Path.Combine(folder, $"{obj.name}.json");
+		File.WriteAllText(path, json);
+	}
+
+	private SerializedEntry Foo(Transform obj)
+	{
+		SerializedEntry e = new SerializedEntry();
+		e.Name = obj.name;
+
+		foreach (Component c in obj.GetComponents<Component>())
+		{
+			if (!c) continue;
+
+			e.Components.Add(c.GetType().Name);
+		}
+
+		for (int i = 0, length = obj.childCount; i < length; i++)
+		{
+			Transform child = obj.GetChild(i);
+
+			e.Childrens.Add(Foo(child));
+		}
+
+		e.Bullshit = e.Childrens.Count;
+
+		return e;
+	}
+
+	private JObject Bullshit(Transform obj)
+	{
+		Dictionary<string, JObject> keys = new Dictionary<string, JObject>();
+		keys["Name"] = JObject.CreateString(obj.name);
+
+		List<JObject> components = new List<JObject>();
+		foreach (Component c in obj.GetComponents<Component>())
+		{
+			if (!c) continue;
+			components.Add(JObject.CreateString(c.GetType().Name));
+		}
+		keys["Components"] = JObject.CreateArray(components);
+
+		List<JObject> childrens = new List<JObject>();
+		for (int i = 0, length = obj.childCount; i < length; i++)
+		{
+			Transform child = obj.GetChild(i);
+			childrens.Add(Bullshit(child));
+		}
+		keys["Childrens"] = JObject.CreateArray(childrens);
+
+		JObject e = JObject.CreateObject(keys);
+
+		return e;
 	}
 }

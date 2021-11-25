@@ -37,6 +37,28 @@ namespace UnityHack
 					Destroy(m_Camera);
 				}
 			}
+			else if (Input.GetKeyDown(KeyCode.Keypad8))
+			{
+				var terrain = FindObjectOfType<Terrain>();
+				if (terrain)
+				{
+					// this doesnt not work because all objects are baked
+					//RemoveGrass.Remove(terrain, 0);
+					//RemoveGrass.Remove(terrain, 1);
+					//RemoveGrass.Remove(terrain, 2);
+					//RemoveGrass.RemoveBaked(terrain);
+
+					// removes all visual meshes, but colliders place in under "[TerrainColliders]" gameobject
+					var baker = FindObjectOfType<RuntimeTerrainBaker>();
+					Destroy(baker.gameObject);
+
+					Debug.Log("removed!");
+				}
+				else
+				{
+					Debug.Log("terrain doesnot found");
+				}
+			}
 		}
 
 		//private void OnGUI()
