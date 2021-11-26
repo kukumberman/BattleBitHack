@@ -10,13 +10,11 @@ namespace UnityHack
     public class Loader
     {
         private static GameObject Instance;
-        
+
         public static void Init()
         {
             Instance = new GameObject();
             Instance.AddComponent<Cucumber>();
-            Instance.AddComponent<HierarchyWindow>();
-            Instance.AddComponent<Chams>();
 
             UnityEngine.Object.DontDestroyOnLoad(Instance);
         }

@@ -9,14 +9,26 @@ namespace UnityHack
 {
 	public class Cucumber : MonoBehaviour
 	{
-		private GameObject m_Camera = null;
+		private GameObject m_FlyingCamera = null;
 
 		private bool m_IsFlying = false;
 
+		private ESP m_ESP = null;
+		private HierarchyWindow m_Hierarchy = null;
+
+		private bool m_IsWindowOpen = true;
+
+		private Rect m_WindowRect = new Rect(0, 0, 1000, 700);
+
+		private int m_ToolbarIndex = 0;
+		private string[] m_ToolbarContent = { "Hierarchy", "ESP" };
+
+		private KeyCode m_ToggleWindowKey = KeyCode.Keypad5;
+
 		private void Start()
 		{
-			string message = "Cucumber started";
-			Debug.Log(message);
+			m_ESP = gameObject.AddComponent<ESP>();
+			m_Hierarchy = gameObject.AddComponent<HierarchyWindow>();
 		}
 
 		private void Update()
@@ -27,14 +39,14 @@ namespace UnityHack
 
 				if (m_IsFlying)
 				{
-					m_Camera = new GameObject("1");
-					m_Camera.transform.position = new Vector3(0, 50, 0);
-					m_Camera.AddComponent<SimpleCameraController>().SetEulers(45, 0);
-					m_Camera.AddComponent<Camera>();
+					m_FlyingCamera = new GameObject("1");
+					m_FlyingCamera.transform.position = new Vector3(0, 50, 0);
+					m_FlyingCamera.AddComponent<SimpleCameraController>().SetEulers(45, 0);
+					m_FlyingCamera.AddComponent<Camera>();
 				}
 				else
 				{
-					Destroy(m_Camera);
+					Destroy(m_FlyingCamera);
 				}
 			}
 			else if (Input.GetKeyDown(KeyCode.Keypad8))
@@ -59,11 +71,62 @@ namespace UnityHack
 					Debug.Log("terrain doesnot found");
 				}
 			}
+			else if (Input.GetKeyDown(m_ToggleWindowKey))
+			{
+				m_IsWindowOpen = !m_IsWindowOpen;
+			}
 		}
 
-		//private void OnGUI()
-		//{
-		//	GUI.Button(new Rect(100, 100, 200, 100), "Cucumber");
-		//}
+		private void OnGUI()
+		{
+			if (m_IsWindowOpen)
+			{
+				m_WindowRect = GUI.Window(0, m_WindowRect, DrawWindow, "Main Window");
+			}
+
+			if (Event.current.type == EventType.Repaint)
+			{
+				m_ESP.DrawESP();
+			}
+		}
+
+		private void DrawWindow(int id)
+		{
+			DrawContent();
+
+			GUI.DragWindow();
+		}
+
+		private void DrawContent()
+		{
+			//m_ToolbarIndex = GUILayout.Toolbar(m_ToolbarIndex, m_ToolbarContent);
+
+			DrawToolbar();
+
+			if (m_ToolbarIndex == 0)
+			{
+				m_Hierarchy.DrawContent();
+			}
+			else if (m_ToolbarIndex == 1)
+			{
+				m_ESP.DrawContent();
+			}
+		}
+
+		private void DrawToolbar()
+		{
+			GUILayout.BeginHorizontal();
+
+			for (int i = 0; i < m_ToolbarContent.Length; i++)
+			{
+				if (GUILayout.Button(m_ToolbarContent[i], GUILayout.ExpandWidth(false)))
+				{
+					m_ToolbarIndex = i;
+					break;
+				}
+			}
+
+			GUILayout.EndHorizontal();
+		}
 	}
 }

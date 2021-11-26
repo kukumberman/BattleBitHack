@@ -23,12 +23,6 @@ public class HierarchyWindow : MonoBehaviour
 	private List<Transform> display = new List<Transform>();
 	private List<Component> components = new List<Component>();
 
-	private Rect mainWindowRect = new Rect(0, 0, 0, 0);
-	private Vector2 mainWindowSize = new Vector2(1000, 750);
-	private Vector2 mainWindowMinimizedSize = new Vector2(250, 100);
-
-	private bool isWindowOpen = false;
-
 	private Pagination hierarchyPagination = new Pagination(10);
 
 	private void Start()
@@ -52,13 +46,6 @@ public class HierarchyWindow : MonoBehaviour
 		hierarchyPagination.UpdateLength(display.Count);
 	}
 
-	private void OnGUI()
-	{
-		Rect rect = isWindowOpen ? new Rect(mainWindowRect.position, mainWindowSize) : new Rect(mainWindowRect.position, mainWindowMinimizedSize);
-
-		mainWindowRect = GUI.Window(0, rect, DrawMainWindow, "Main Window");
-	}
-
 	private void OnClickRefreshHierarchy()
 	{
 		sceneTopObjects.Clear();
@@ -70,37 +57,30 @@ public class HierarchyWindow : MonoBehaviour
 		components.Clear();
 	}
 
-	private void DrawMainWindow(int id)
+	public void DrawContent()
 	{
-		isWindowOpen = GUILayout.Toggle(isWindowOpen, "Show buttons");
-
-		if (isWindowOpen)
+		if (GUILayout.Button($"Refresh Hierarchy {sceneTopObjects.Count}", GUILayout.ExpandWidth(false)))
 		{
-			if (GUILayout.Button($"Refresh Hierarchy {sceneTopObjects.Count}", GUILayout.ExpandWidth(false)))
-			{
-				OnClickRefreshHierarchy();
-			}
-
-			if (GUILayout.Button("Clear", GUILayout.ExpandWidth(false)))
-			{
-				sceneTopObjects.Clear();
-				currentChain.Clear();
-				display.Clear();
-				components.Clear();
-			}
-
-			DrawBreadcrumb();
-
-			GUILayout.BeginHorizontal();
-
-			DrawDisplay();
-
-			DrawComponentsList();
-
-			GUILayout.EndHorizontal();
+			OnClickRefreshHierarchy();
 		}
 
-		GUI.DragWindow();
+		if (GUILayout.Button("Clear", GUILayout.ExpandWidth(false)))
+		{
+			sceneTopObjects.Clear();
+			currentChain.Clear();
+			display.Clear();
+			components.Clear();
+		}
+
+		DrawBreadcrumb();
+
+		GUILayout.BeginHorizontal();
+
+		DrawDisplay();
+
+		DrawComponentsList();
+
+		GUILayout.EndHorizontal();
 	}
 
 	private void DrawBreadcrumb()
