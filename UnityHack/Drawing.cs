@@ -9,15 +9,7 @@ namespace UnityHack
 {
 	public static class Drawing
 	{
-		public static GUIStyle StringStyle { get; set; } = new GUIStyle(GUI.skin.label);
-
 		private static Texture2D lineTex = new Texture2D(1, 1);
-
-		//public static Color Color
-		//{
-		//	get { return GUI.color; }
-		//	set { GUI.color = value; }
-		//}
 
 		public static void DrawSolidBox(Vector2 position, Vector2 size, bool centered = true)
 		{
@@ -25,12 +17,12 @@ namespace UnityHack
 			GUI.DrawTexture(new Rect(upperLeft, size), Texture2D.whiteTexture, ScaleMode.StretchToFill);
 		}
 
-		public static void DrawString(Vector2 position, string label, bool centered = true)
+		public static void DrawString(Vector2 position, string label, GUIStyle style, bool centered = true)
 		{
 			var content = new GUIContent(label);
-			var size = StringStyle.CalcSize(content);
+			var size = style.CalcSize(content);
 			var upperLeft = centered ? position - size / 2f : position;
-			GUI.Label(new Rect(upperLeft, size), content);
+			GUI.Label(new Rect(upperLeft, size), content, style);
 		}
 
 		public static void DrawLine(Vector2 a, Vector2 b, float thickness)
@@ -45,6 +37,9 @@ namespace UnityHack
 			GUIUtility.ScaleAroundPivot(new Vector2((b - a).magnitude, thickness), new Vector2(a.x, a.y + 0.5f));
 			GUIUtility.RotateAroundPivot(angle, a);
 			GUI.DrawTexture(new Rect(a.x, a.y, 1, 1), lineTex);
+
+			// even if manually try with vector4 ctor is doesnt not work UnityEngine.Internal_DrawTextureArguments
+			//GUI.DrawTexture(new Rect(a.x, a.y, 1, 1), lineTex, ScaleMode.StretchToFill, true, 0, GUI.color, new Vector4(1, 1, 1, 1), new Vector4(1, 1, 1, 1));
 
 			GUI.matrix = matrix;
 

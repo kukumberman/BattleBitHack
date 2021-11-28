@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -75,19 +76,82 @@ namespace UnityHack
 			{
 				m_IsWindowOpen = !m_IsWindowOpen;
 			}
+
+			//if (Input.GetKeyDown(KeyCode.Keypad1))
+			//{
+			//	BullshitMaterials();
+			//}
+		}
+
+		private void BullshitMaterials()
+		{
+			var f = FindObjectOfType<TestRangeTarget>().GetComponentInChildren<MeshFilter>();
+
+			GameObject cube = new GameObject();
+			cube.AddComponent<MeshFilter>().sharedMesh = f.sharedMesh;
+			MeshRenderer rend = cube.AddComponent<MeshRenderer>();
+
+			var player = FindObjectOfType<OfflinePlayer>();
+			cube.transform.position = player.transform.position + Vector3.up * 5;
+
+			var shader = Shader.Find("Hidden/Internal-Colored");
+			Material a = new Material(shader);
+			a.SetInt("_ZWrite", 0);
+			a.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+			a.SetColor("_Color", Color.red);
+
+			Material b = new Material(shader);
+			b.SetColor("_Color", Color.green);
+
+			Material[] mats = new Material[] { a, b };
+
+			rend.sharedMaterials[0] = a;
+
+			//MissingMethodException: object System.Type.InvokeMember(string, System.Reflection.BindingFlags, System.Reflection.Binder, object, object[])
+
+			/*
+			Type type = rend.GetType();
+			BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.SetProperty | BindingFlags.Instance;
+
+			string propName = "sharedMaterials";
+
+			PropertyInfo p = type.GetProperty(propName, flags);
+			if (p == null)
+			{
+				throw new ArgumentOutOfRangeException(nameof(propName), string.Format("Property {0} was not found in Type {1}", propName, type.FullName));
+			}
+
+			//type.InvokeMember(propName, flags, null, rend, new object[] { mats });
+			p.SetValue(rend, mats, null); // not working
+
+			//rend.sharedMaterial = a;
+
+			Debug.Log("SUCCESS");
+			*/
 		}
 
 		private void OnGUI()
 		{
-			if (m_IsWindowOpen)
-			{
-				m_WindowRect = GUI.Window(0, m_WindowRect, DrawWindow, "Main Window");
-			}
+			// no lines allowed in current version :(
+			//Drawing.DrawLine(Vector2.zero, new Vector2(Screen.width, Screen.height), 1);
 
-			if (Event.current.type == EventType.Repaint)
+			try
 			{
-				m_ESP.DrawESP();
+				if (m_IsWindowOpen)
+				{
+					m_WindowRect = GUI.Window(0, m_WindowRect, DrawWindow, "Main Window");
+				}
+
+				if (Event.current.type == EventType.Repaint)
+				{
+					m_ESP.DrawESP();
+				}
 			}
+			catch
+			{
+
+			}
+			
 		}
 
 		private void DrawWindow(int id)

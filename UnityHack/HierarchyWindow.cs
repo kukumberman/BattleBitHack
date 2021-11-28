@@ -277,18 +277,18 @@ public class HierarchyWindow : MonoBehaviour
 		components.AddRange(entry.GetComponents<Component>());
 	}
 
-	private void Stringify(Transform obj)
+	public static void Stringify(Transform obj)
 	{
 		// JsonUtility doesn't serializes "Childrens property" + no .dll by default in game folder
 		//string json = JsonUtility.ToJson(Foo(obj);, true);
 		string json = JSONEncoder.Encode(Bullshit(obj));
 
 		string folder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-		string path = Path.Combine(folder, $"{obj.name}.json");
+		string path = Path.Combine(folder, $"{obj.name}-{obj.GetInstanceID()}.json");
 		File.WriteAllText(path, json);
 	}
 
-	private SerializedEntry Foo(Transform obj)
+	private static SerializedEntry Foo(Transform obj)
 	{
 		SerializedEntry e = new SerializedEntry();
 		e.Name = obj.name;
@@ -312,7 +312,7 @@ public class HierarchyWindow : MonoBehaviour
 		return e;
 	}
 
-	private JObject Bullshit(Transform obj)
+	private static JObject Bullshit(Transform obj)
 	{
 		Dictionary<string, JObject> keys = new Dictionary<string, JObject>();
 		keys["Name"] = JObject.CreateString(obj.name);

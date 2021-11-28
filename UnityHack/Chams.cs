@@ -113,7 +113,7 @@ namespace UnityHack
 
 				float distance = Vector3.Distance(target.transform.position, m_Camera.transform.position);
 				string text = $"{target.name}\n{distance}";
-				Drawing.DrawString(pos, text);
+				//Drawing.DrawString(pos, text);
 
 				//Drawing.DrawBox(pos, Vector2.one * 100, 1);
 			}

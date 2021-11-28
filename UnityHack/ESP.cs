@@ -12,8 +12,10 @@ namespace UnityHack
 	{
 		private bool m_DrawEnemies = true;
 		private bool m_DrawTeam = true;
+		private bool m_DrawExtendedInfo = false;
 
-		private int m_DistanceThreshold = 100;
+		private int m_DistanceThreshold = 200;
+		private int m_FontSize = 10;
 
 		private Color m_EnemyColor = Color.red;
 		private Color m_TeamColor = Color.green;
@@ -24,27 +26,47 @@ namespace UnityHack
 
 		private SerializedPlayer m_SelectedPlayer = null;
 
+		private GUIStyle m_TextStyle = null;
+
+		private int m_DistanceThresholdIncremental = 10;
+
 		private IEnumerator Start()
 		{
-			var wait = new WaitForSeconds(2);
+			var wait = new WaitForSeconds(1);
 
 			while (true)
 			{
-				Cache();
+				try
+				{
+					Cache();
+				}
+				catch { }
 				yield return wait;
 			}
 		}
 
 		private void Cache()
 		{
-			m_Camera = Camera.main;
 			m_Players.Clear();
+			m_SerializedPlayers.Clear();
+
+			m_Camera = MainCamera.Instance.CameraComponent;
+
 			m_Players.AddRange(ActiveRoom.IterateAllPlayers(true));
 
-			m_SerializedPlayers.Clear();
 			for (int i = 0; i < m_Players.Count; i++)
 			{
-				m_SerializedPlayers.Add(SerializedPlayer.FromNetwork(m_Players[i]));
+				var player = m_Players[i];
+
+				if (!player.isMine && !player.Owner.IsFriendly)
+				{
+					foreach(var rend in player.GetComponentsInChildren<SkinnedMeshRenderer>())
+					{
+						rend.sharedMaterial = null;
+					}
+				}
+
+				m_SerializedPlayers.Add(SerializedPlayer.FromNetwork(player));
 			}
 
 			// todo change material (chams)
@@ -71,6 +93,10 @@ namespace UnityHack
 		{
 			if (m_Camera == null) return;
 
+			m_TextStyle = new GUIStyle(GUI.skin.label);
+			m_TextStyle.fontSize = m_FontSize;
+			m_TextStyle.alignment = TextAnchor.MiddleCenter;
+
 			foreach (PlayerNetwork player in m_Players)
 			{
 				DrawPlayerESP(player);
@@ -82,7 +108,15 @@ namespace UnityHack
 			GUILayout.Box("ESP Settings");
 			m_DrawEnemies = GUILayout.Toggle(m_DrawEnemies, nameof(m_DrawEnemies));
 			m_DrawTeam = GUILayout.Toggle(m_DrawTeam, nameof(m_DrawTeam));
+			m_DrawExtendedInfo = GUILayout.Toggle(m_DrawExtendedInfo, nameof(m_DrawExtendedInfo));
+
+			GUILayout.Label($"{nameof(m_FontSize)} - {m_FontSize}");
+			m_FontSize = DrawIncrementalLabel(nameof(m_FontSize), m_FontSize, 2);
+
 			GUILayout.Label($"{nameof(m_DistanceThreshold)} - {m_DistanceThreshold}");
+			m_DistanceThreshold = DrawIncrementalLabel(nameof(m_DistanceThreshold), m_DistanceThreshold, m_DistanceThresholdIncremental);
+
+			// error
 			//m_DistanceThreshold = (int)GUILayout.HorizontalSlider(m_DistanceThreshold, 50, 200);
 		}
 
@@ -92,10 +126,19 @@ namespace UnityHack
 
 			for (int i = 0; i < m_SerializedPlayers.Count; i++)
 			{
+				GUILayout.BeginHorizontal();
+
 				if (GUILayout.Button(m_SerializedPlayers[i].FullName))
 				{
 					m_SelectedPlayer = m_SerializedPlayers[i];
 				}
+
+				if (GUILayout.Button("JSON", GUILayout.ExpandWidth(false)))
+				{
+					HierarchyWindow.Stringify(m_Players[i].transform);
+				}
+
+				GUILayout.EndHorizontal();
 			}
 		}
 
@@ -141,19 +184,46 @@ namespace UnityHack
 			if (sameTeam && !m_DrawTeam) return;
 			if (!sameTeam && !m_DrawEnemies) return;
 
-			Vector3 headPos = player.State.HeadPosition;
-			Vector3 screenPos = m_Camera.WorldToScreenPoint(headPos);
+			Vector3 worldPos = player.transform.position; // ?
+			Vector3 screenPos = m_Camera.WorldToScreenPoint(worldPos);
 			if (screenPos.z < 0) return;
 			screenPos.y = Screen.height - screenPos.y;
 
 			GUI.color = sameTeam ? m_TeamColor : m_EnemyColor;
 
-			string fullName = player.Owner.FullName;
-			float health = player.State.Health;
+			if (m_DrawExtendedInfo)
+			{
+				string fullName = player.Owner.FullName;
+				float health = player.State.Health;
 
-			string text = $"{fullName}\n{health}\n{distance}";
-			Drawing.StringStyle.alignment = TextAnchor.MiddleCenter;
-			Drawing.DrawString(screenPos, text);
+				string text = $"{fullName}\n{health}\n{distance}";
+				Drawing.DrawString(screenPos, text, m_TextStyle);
+			}
+			else
+			{
+				Drawing.DrawString(screenPos, "*", m_TextStyle);
+			}
+		}
+
+		private static int DrawIncrementalLabel(string label, int value, int incrementalValue)
+		{
+			GUILayout.BeginHorizontal();
+
+			GUILayout.Label(label, GUILayout.ExpandWidth(false));
+
+			if (GUILayout.Button("-", GUILayout.ExpandWidth(false)))
+			{
+				value -= incrementalValue;
+			}
+
+			if (GUILayout.Button("+", GUILayout.ExpandWidth(false)))
+			{
+				value += incrementalValue;
+			}
+
+			GUILayout.EndHorizontal();
+
+			return value;
 		}
 	}
 }
