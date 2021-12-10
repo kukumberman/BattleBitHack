@@ -15,10 +15,12 @@ namespace UnityHack
 		private bool m_DrawExtendedInfo = false;
 
 		private int m_DistanceThreshold = 200;
-		private int m_FontSize = 10;
+		private int m_FontSize = 20;
 
 		private Color m_EnemyColor = Color.red;
 		private Color m_TeamColor = Color.green;
+
+		private CustomGradient m_EnemyGradient = new CustomGradient();
 
 		private Camera m_Camera = null;
 		private List<PlayerNetwork> m_Players = new List<PlayerNetwork>();
@@ -29,6 +31,14 @@ namespace UnityHack
 		private GUIStyle m_TextStyle = null;
 
 		private int m_DistanceThresholdIncremental = 10;
+
+		private void Awake()
+		{
+			m_EnemyGradient.UpdateKeyColour(0, Color.red);
+			m_EnemyGradient.UpdateKeyColour(1, Color.blue);
+			m_EnemyGradient.AddKey(Color.yellow, 0.33f);
+			m_EnemyGradient.AddKey(Color.green, 0.66f);
+		}
 
 		private IEnumerator Start()
 		{
@@ -87,6 +97,20 @@ namespace UnityHack
 			GUILayout.EndVertical();
 
 			GUILayout.EndHorizontal();
+
+			float[] values = new float[] { 0, 0.331f, 0.661f, 1 };
+
+			for (int i = 0; i < values.Length; i++)
+			{
+				Color c = m_EnemyGradient.Evaluate(values[i]);
+				GUI.color = c;
+				GUILayout.Label(c.ToString());
+			}
+			
+			//GUILayout.Label(m_EnemyGradient.Evaluate(0).ToString());
+			//GUILayout.Label(m_EnemyGradient.Evaluate(0.33f).ToString());
+			//GUILayout.Label(m_EnemyGradient.Evaluate(0.66f).ToString());
+			//GUILayout.Label(m_EnemyGradient.Evaluate(1).ToString());
 		}
 
 		public void DrawESP()
@@ -179,6 +203,8 @@ namespace UnityHack
 			float distance = player.State.DistanceToLocalPlayer;
 			if (distance > m_DistanceThreshold) return;
 
+			if (!player.State.isAlive) return; // todo: not proper state
+
 			bool sameTeam = player.Owner.IsFriendly;
 
 			if (sameTeam && !m_DrawTeam) return;
@@ -189,6 +215,9 @@ namespace UnityHack
 			if (screenPos.z < 0) return;
 			screenPos.y = Screen.height - screenPos.y;
 
+			float m_DistancePercentage01 = distance / m_DistanceThreshold;
+
+			m_EnemyColor = m_EnemyGradient.Evaluate(m_DistancePercentage01);
 			GUI.color = sameTeam ? m_TeamColor : m_EnemyColor;
 
 			if (m_DrawExtendedInfo)
