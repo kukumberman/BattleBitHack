@@ -24,7 +24,7 @@ namespace UnityHack
 		private int m_ToolbarIndex = 0;
 		private string[] m_ToolbarContent = { "Hierarchy", "ESP" };
 
-		private KeyCode m_ToggleWindowKey = KeyCode.Keypad5;
+		private KeyCode m_ToggleWindowKey = KeyCode.Keypad2;
 
 		private void Start()
 		{
@@ -75,6 +75,12 @@ namespace UnityHack
 			else if (Input.GetKeyDown(m_ToggleWindowKey))
 			{
 				m_IsWindowOpen = !m_IsWindowOpen;
+			}
+
+			if (Input.GetKeyDown(KeyCode.Keypad1))
+			{
+				var local = ActiveRoom.LocalPlayer;
+				HierarchyWindow.Stringify(local.transform);
 			}
 
 			//if (Input.GetKeyDown(KeyCode.Keypad1))
